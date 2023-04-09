@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 import 'package:flutter/material.dart';
+
 import 'constants.dart';
 
 class GenImgScreen extends StatefulWidget {
@@ -19,8 +20,7 @@ class _GenImgScreenState extends State<GenImgScreen> {
   void initState() {
     openAI = OpenAI.instance.build(
         token: token,
-        baseOption: HttpSetup(receiveTimeout: const Duration(seconds: 6)),
-        isLog: true);
+        baseOption: HttpSetup(receiveTimeout: const Duration(seconds: 6)),isLogger: true);
     super.initState();
   }
 
@@ -31,16 +31,18 @@ class _GenImgScreenState extends State<GenImgScreen> {
     super.dispose();
   }
 
-  void _generateImage() async {
+  void _generateImage() async{
     const prompt = "King Snake.";
 
-    final request = GenerateImage(prompt, 1,size: ImageSize.size256,responseFormat: Format.url);
-    subscription =
-        openAI.generateImageStream(request).asBroadcastStream().listen((it) {
+    final request = GenerateImage(prompt,1);
+    subscription = openAI.generateImageStream(request)
+    .asBroadcastStream()
+    .listen((it) {
       setState(() {
         img = "${it.data?.last?.url}";
       });
     });
+
   }
 
   @override
@@ -54,7 +56,7 @@ class _GenImgScreenState extends State<GenImgScreen> {
                   onPressed: () => _generateImage(),
                   child: const Text("Generate Image"))),
           img == ""
-              ? const Text("Loading...")
+              ? const SizedBox()
               : AspectRatio(
                   aspectRatio: 16 / 9,
                   child: Image.network(img),

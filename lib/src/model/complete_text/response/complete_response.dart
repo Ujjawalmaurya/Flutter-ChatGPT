@@ -4,13 +4,12 @@ import 'choices.dart';
 
 ///CT is Complete text [CTResponse]
 class CTResponse {
-  final String conversionId = "${DateTime.now().millisecondsSinceEpoch}";
   final String id;
   final String object;
   final int created;
   final String model;
   final List<Choices> choices;
-  final Usage? usage;
+  final Usage usage;
 
   CTResponse(
       this.id, this.object, this.created, this.model, this.choices, this.usage);
@@ -23,7 +22,7 @@ class CTResponse {
         (json['choices'] as List<dynamic>)
             .map((e) => Choices.fromJson(e as Map<String, dynamic>))
             .toList(),
-      json['usage'] == null ? null :Usage.fromJson(json['usage'] as Map<String, dynamic>),
+        Usage.fromJson(json['usage'] as Map<String, dynamic>),
       );
 
   Map<String, dynamic> toJson() => responseToJson(this);

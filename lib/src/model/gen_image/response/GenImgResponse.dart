@@ -8,7 +8,6 @@ class GenImgResponse {
 
   int? created;
   List<ImageData?>? data;
-  final String conversionId = "${DateTime.now().millisecondsSinceEpoch}";
 
   factory GenImgResponse.fromJson(Map<String, dynamic> json) => GenImgResponse(
         created: json["created"],

@@ -1,7 +1,12 @@
-import 'package:chat_gpt_sdk/src/utils/constants.dart';
-import 'dart:developer' as dev;
+import 'package:flutter/cupertino.dart';
 
-class Logger {
+abstract class ILogger {
+  void errorLog({int? code, String? error});
+  void debugString(String? error);
+  Logger builder({required bool isLogging});
+}
+
+class Logger extends ILogger {
   Logger._();
 
   ///[instance]
@@ -12,16 +17,20 @@ class Logger {
   /// use for enable log
   bool isLogging = false;
 
+  @override
   Logger builder({required bool isLogging}) {
     this.isLogging = isLogging;
     return instance;
   }
 
-  void log(String message) {
-    if (isLogging) dev.log(message, name: kOpenAI);
+  @override
+  void errorLog({int? code, String? error}) {
+   if(isLogging) debugPrint("status code :$code\nerror message :$error");
   }
 
-  void error(Object? err,StackTrace? t){
-    if(isLogging) dev.log("error",error: err,stackTrace: t);
+  @override
+  void debugString(String? error) {
+    if(isLogging) debugPrint("$error");
   }
+
 }

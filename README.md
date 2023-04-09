@@ -12,50 +12,18 @@ and the Flutter guide for
 -->
 
 ## ChatGPT Application with flutter
-ChatGPT is a chatbot launched by OpenAI in November 2022. It is built on top
-of OpenAI's GPT-3.5 family of large language models, and is fine-tuned with both
+ChatGPT is a chatbot launched by OpenAI in November 2022. It is built on top 
+of OpenAI's GPT-3.5 family of large language models, and is fine-tuned with both 
 supervised and reinforcement learning techniques.
-
-## OpenAI Powerful Library
-
-<br>
-<p align="center">
-<img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/redevRx/Flutter-ChatGPT">
-<img alt="GitHub contributors" src="https://img.shields.io/github/contributors/redevRx/Flutter-ChatGPT">
-<img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/redevRx/Flutter-ChatGPT?style=social">
-<img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/redevRx/Flutter-ChatGPT/dart.yml?label=tests">
-<img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/redevRx/Flutter-ChatGPT/release.yml?label=build">
-<img alt="GitHub" src="https://img.shields.io/github/license/redevRx/Flutter-ChatGPT">
-
-</p
-</br>
-
-## Features
-
-- [x] [Install Package](#install-package)
-- [x] [Create OpenAI Instance](#create-openai-instance)
-- [x] [Change Access Token](#change-access-token)
-- [x] [Complete Text](#complete-text)
-- [x] [Chat Complete (GPT-3.5 Turbo)](#chat-complete-gpt-35-turbo)
-- [x] [Example Q&A](#qa)
-- [x] [Generate Image With Prompt](#generate-image-with-prompt)
-- [x] [Editing](#edit)
-- [x] [Stop Generate](#stopping-generate)
-- [x] [File](#file)
-- [x] [Audio](#audio)
-- [x] [Model And Engine](#modelengine)
-- [x] [Flutter Code Example](#flutter-example)
-- [x] [Video Tutorial](#video-tutorials)
-
-
 
 ## Install Package
 ```dart
-chat_gpt: 2.0.8
+chat_gpt: 2.0.4
 ```
 
-## Create OpenAI Instance
+## Example
 
+Create ChatGPT Instance
  - Parameter
    - Token
      - Your secret API keys are listed below. Please note that we do not display your secret API keys again after you generate them. 
@@ -68,13 +36,7 @@ chat_gpt: 2.0.8
 ```dart
 final openAI = OpenAI.instance.build(token: token,baseOption: HttpSetup(receiveTimeout: const Duration(seconds: 5)),isLogger: true);
 ```
-## Change Access Token
 
-```dart
-openAI.setToken('new-token');
-```
-
-## Complete Text
 - Text Complete API
   - Translate Method
     - translateEngToThai
@@ -89,6 +51,38 @@ openAI.setToken('new-token');
       - Find the time complexity of a function.
   - https://beta.openai.com/examples
 
+```dart
+final request = CompleteText(prompt: translateEngToThai(word: ''),
+                model: kTranslateModelV3, maxTokens: 200);
+
+ openAI.onCompletionStream(request:request).listen((response) => print(response))
+        .onError((err) {
+          print("$err");
+  });
+```
+
+- Complete with StreamBuilder
+```dart
+final tController = StreamController<CTResponse?>.broadcast();
+
+openAI
+        .onCompletionStream(request: request)
+.asBroadcastStream()
+        .listen((res) {
+tController.sink.add(res);
+});
+
+///ui code
+StreamBuilder<CTResponse?>(
+ stream: tController.stream,
+ builder: (context, snapshot) {
+   final data = snapshot.data;
+   if(snapshot.connectionState == ConnectionState.done) return something 
+   if(snapshot.connectionState == ConnectionState.waiting) return something
+   return something
+})
+```
+
 - Complete with Feature
 
 ```dart
@@ -99,78 +93,20 @@ openAI.setToken('new-token');
           model: kTranslateModelV3);
 
   final response = await openAI.onCompletion(request: request);
-  
-  ///cancel request
-  openAI.cancelAIGenerate();
   print(response);
 }
 ```
 
-- Complete with FutureBuilder
-```dart
-Future<CTResponse?>? _translateFuture;
-
-_translateFuture = openAI.onCompletion(request: request);
-
-///ui code
-FutureBuilder<CTResponse?>(
- future: tController.stream,
- builder: (context, snapshot) {
-   final data = snapshot.data;
-   if(snapshot.connectionState == ConnectionState.done) return something 
-   if(snapshot.connectionState == ConnectionState.waiting) return something
-   return something
-})
-```
-
-- GPT-3 with SSE
-```dart
- void completeWithSSE() {
-  final request = CompleteText(
-          prompt: "Hello world", maxTokens: 200, model: Model.TextDavinci3);
-  openAI.onCompletionSSE(request: request).listen((it) {
-    debugPrint(it.choices.last.text);
-  });
-}
-```
-
-## Chat Complete (GPT-3.5 Turbo)
-
-- Support SSE(Server Send Event)
-  - GPT-3.5 Turbo
-```dart
- void chatCompleteWithSSE() {
-  final request = ChatCompleteText(messages: [
-    Map.of({"role": "user", "content": 'Hello!'})
-  ], maxToken: 200, model: ChatModel.ChatGptTurboModel);
-
-  openAI.onChatCompletionSSE(request: request).listen((it) {
-    debugPrint(it.choices.last.message?.content);
-  });
-}
-```
-- Chat Complete
-
-```dart
-  void chatComplete() async {
-    final request = ChatCompleteText(messages: [
-      Map.of({"role": "user", "content": 'Hello!'})
-    ], maxToken: 200, model: ChatModel.ChatGptTurbo0301Model);
-
-    final response = await openAI.onChatCompletion(request: request);
-    for (var element in response!.choices) {
-      print("data -> ${element.message?.content}");
-    }
-  }
-```
-## Q&A
 - Example Q&A 
   - Answer questions based on existing knowledge.
 ```dart
 final request = CompleteText(prompt:'What is human life expectancy in the United States?'),
                 model: kTranslateModelV3, maxTokens: 200);
 
- final response = await openAI.onCompletion(request:request);
+ openAI.onCompletionStream(request:request).listen((response) => print(response))
+        .onError((err) {
+           print("$err");
+});
 ```
 - Request
  
@@ -184,7 +120,21 @@ Q: What is human life expectancy in the United States?
 A: Human life expectancy in the United States is 78 years.
 ```
 
-## Generate Image With Prompt
+- Support ChatGPT 3.5 Turbo
+
+```dart
+  void _chatGpt3Example() async {
+  final request = ChatCompleteText(messages: [
+    Map.of({"role": "user", "content": 'Hello!'})
+  ], maxToken: 200, model: kChatGptTurbo0301Model);
+
+  final response = await openAI.onChatCompletion(request: request);
+  for (var element in response!.choices) {
+    print("data -> ${element.message.content}");
+  }
+}
+```
+
 
 - Generate Image
   - prompt
@@ -198,156 +148,37 @@ A: Human life expectancy in the United States is 78 years.
   - user
     - A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
 - 
+- Generate with stream
+```dart
+  openAI = OpenAI
+        .instance
+        .builder(toekn:"token",
+         baseOption: HttpSetup(receiveTimeout: const Duration(seconds: 5)),isLogger:true);
 
+const prompt = "Snake Red";
+
+final request = GenerateImage(prompt,2);
+
+               openAI.generateImageStream(request)
+              .asBroadcastStream()
+              .listen((it) {
+                print(it.data?.last?.url)
+              });
+
+/// cancel stream controller
+openAI.genImgClose();
+```
 - Generate with feature
 ```dart
   void _generateImage() {
   const prompt = "cat eating snake blue red.";
 
-  final request = GenerateImage(prompt, 1,size: ImageSize.size256,
-          response_format: Format.url);;
+  final request = GenerateImage(prompt,2);
   final response = openAI.generateImage(request);
   print("img url :${response.data?.last?.url}");
 }
 ```
-## Edit
-- Edit Prompt
-```dart
-void editPrompt() async {
-    final response = await openAI.editor.prompt(EditRequest(
-        model: EditModel.TextEditModel,
-        input: 'What day of the wek is it?',
-        instruction: 'Fix the spelling mistakes'));
 
-    print(response.choices.last.text);
-  }
-```
-
-- Edit Image
-```dart
- void editImage() async {
-  final response = await openAI.editor.editImage(EditImageRequest(
-          image: EditFile("${image?.path}", '${image?.name}'),
-          mask: EditFile('file path', 'file name'),
-          size: ImageSize.size1024,
-          prompt: 'King Snake'));
-
-  print(response.data?.last?.url);
-}
-```
-
-- Variations 
-```dart
-  void variation() async {
-  final request =
-  Variation(image: EditFile('${image?.path}', '${image?.name}'));
-  final response = await openAI.editor.variation(request);
-
-  print(response.data?.last?.url);
-}
-```
-## Stopping Generate
-
-- Stop Generate Prompt
-```dart
-openAI.cancelAIGenerate();
-```
-
-- Stop Edit
-  - image
-  - prompt
-```dart
-openAI.cancelEdit();
-```
-
-- Stop Embedding
-```dart
-openAI.cancelEmbedding();
-```
-
-- Stop Audio
-  - translate
-  - transcript
-```dart
-openAI.cancelAudio();
-```
-
-- Stop File
-  - upload file
-  - get file
-  - delete file
-```dart
-openAI.cancelFile();
-```
-
-## File
-
-- Get File
-```dart
-void getFile() async {
-  final response = await openAI.file.get();
-  print(response.data);
-}
-```
-
-- Upload File
-```dart
-void uploadFile() async {
-  final request = UploadFile(file: EditFile('file-path', 'file-name'),purpose: 'fine-tune');
-  final response = await openAI.file.uploadFile(request);
-  print(response);
-}
-```
-
-- Delete File
-```dart
-  void delete() async {
-  final response = await openAI.file.delete("file-Id");
-  print(response);
-}
-```
-
-- Retrieve File
-```dart
-  void retrieve() async {
-  final response = await openAI.file.retrieve("file-Id");
-  print(response);
-}
-```
-
-- Retrieve Content File
-```dart
-  void retrieveContent() async {
-  final response = await openAI.file.retrieveContent("file-Id");
-  print(response);
-}
-```
-
-## Audio
-
-- Audio Translate
-```dart
-void audioTranslate() async {
-  final mAudio = File('mp3-path');
-  final request =
-  AudioRequest(file: EditFile(mAudio.path, 'name'), prompt: '...');
-
-  final response = await openAI.audio.translate(request);
-}
-```
-
-- Audio Transcribe
-```dart
-void audioTranscribe() async {
-  final mAudio = File('mp3-path');
-  final request =
-  AudioRequest(file: EditFile(mAudio.path, 'name'), prompt: '...');
-
-  final response = await openAI.audio.transcribes(request);
-}
-```
-
-## Model&Engine
 
 - Model List
   - List and describe the various models available in the API. You can refer to the Models documentation to 
@@ -370,7 +201,6 @@ final engines = await openAI.listEngine();
 ## Flutter Example
 
 ```dart
-
 class TranslateScreen extends StatefulWidget {
   const TranslateScreen({Key? key}) : super(key: key);
   @override
@@ -386,20 +216,17 @@ class _TranslateScreenState extends State<TranslateScreen> {
   ///t => translate
   final tController = StreamController<CTResponse?>.broadcast();
 
-  Future<CTResponse?>? _translateFuture;
   void _translateEngToThai() async {
     final request = CompleteText(
             prompt: translateEngToThai(word: _txtWord.text.toString()),
             maxTokens: 200,
-            model: Model.TextDavinci3);
+            model: kTextDavinci3);
 
-    _translateFuture = openAI.onCompletion(request: request);
-
-  }
-
-  /// ### can stop generate prompt
-  void cancelAIGenerate(){
-    openAI.cancelAIGenerate();
+    openAI.onCompletionStream(request: request).asBroadcastStream().listen((res) {
+      tController.sink.add(res);
+    }).onError((err) {
+      print("$err");
+    });
   }
 
   ///ID of the model to use. Currently, only and are supported
@@ -408,7 +235,7 @@ class _TranslateScreenState extends State<TranslateScreen> {
   void _chatGpt3Example() async {
     final request = ChatCompleteText(messages: [
       Map.of({"role": "user", "content": 'Hello!'})
-    ], maxToken: 200, model: ChatModel.ChatGptTurbo0301Model);
+    ], maxToken: 200, model: kChatGptTurbo0301Model);
 
     final response = await openAI.onChatCompletion(request: request);
     for (var element in response!.choices) {
@@ -416,6 +243,17 @@ class _TranslateScreenState extends State<TranslateScreen> {
     }
   }
 
+  void _chatGpt3ExampleStream() async {
+    final request = ChatCompleteText(messages: [
+      Map.of({"role": "user", "content": 'Hello!'})
+    ], maxToken: 200, model: kChatGptTurbo0301Model);
+
+    openAI.onChatCompletionStream(request: request).listen((it) {
+      debugPrint("${it?.choices.last.message}");
+    }).onError((err) {
+      print(err);
+    });
+  }
 
   void modelDataList() async {
     final model = await OpenAI.instance.build(token: "").listModel();
@@ -425,74 +263,21 @@ class _TranslateScreenState extends State<TranslateScreen> {
     final engines = await OpenAI.instance.build(token: "").listEngine();
   }
 
-  void completeWithSSE() {
-    final request = CompleteText(
-            prompt: "Hello world", maxTokens: 200, model: Model.TextDavinci3);
-    openAI.onCompletionSSE(
-            request: request,
-            complete: (it) {
-              it.map((data) => utf8.decode(data)).listen((data) {
-                ///
-                final raw = data
-                        .replaceAll(RegExp("data: "), '')
-                        .replaceAll(RegExp("[DONE]"), '');
-
-                /// convert data
-                String message = "";
-                dynamic mJson = json.decode(raw);
-                if (mJson is Map) {
-                  ///[message]
-                  message +=
-                  " ${mJson['choices'].last['text'].toString().replaceAll(RegExp("\n"), '')}";
-                }
-                debugPrint("${message}");
-              }).onError((e) {
-                ///handle error
-              });
-            });
-  }
-
-  void chatCompleteWithSSE() {
-    final request = ChatCompleteText(messages: [
-      Map.of({"role": "user", "content": 'Hello!'})
-    ], maxToken: 200, model: ChatModel.ChatGptTurboModel);
-
-    openAI.onChatCompletionSSE(
-            request: request,
-            complete: (it) {
-              it.map((it) => utf8.decode(it)).listen((data) {
-                final raw = data
-                        .replaceAll(RegExp("data: "), '')
-                        .replaceAll(RegExp("[DONE]"), '')
-                        .replaceAll("[]", '')
-                        .trim();
-
-                if (raw != null || raw.isNotEmpty) {
-                  ///
-                  final mJson = json.decode(raw);
-                  if (mJson is Map) {
-                    debugPrint(
-                            "-> :${(mJson['choices'] as List).last['delta']['content'] ?? "not fond content"}");
-                  }
-                }
-              }).onError((e) {
-                ///handle error
-                debugPrint("error ---> $e");
-              });
-            });
-  }
-
   @override
   void initState() {
     openAI = OpenAI.instance.build(
             token: token,
-            baseOption: HttpSetup(receiveTimeout: const Duration(seconds: 20),connectTimeout: const Duration(seconds: 20)),
-            isLog: true);
+            baseOption: HttpSetup(
+                    receiveTimeout: const Duration(seconds: 5),
+                    connectTimeout: const Duration(seconds: 5)),
+            isLogger: true);
     super.initState();
   }
 
   @override
   void dispose() {
+    ///close stream complete text
+    openAI.close();
     tController.close();
     super.dispose();
   }
@@ -550,14 +335,14 @@ class _TranslateScreenState extends State<TranslateScreen> {
                         icon: Icons.translate,
                         iconSize: 18.0,
                         radius: 46.0,
-                        onClick: () =>  _translateEngToThai())),
+                        onClick: () =>_translateEngToThai())),
       ],
     );
   }
 
   Widget _resultCard(Size size) {
-    return FutureBuilder<CTResponse?>(
-      future: _translateFuture,
+    return StreamBuilder<CTResponse?>(
+      stream: tController.stream,
       builder: (context, snapshot) {
         final text = snapshot.data?.choices.last.text ?? "Loading...";
         return Container(
@@ -784,12 +569,11 @@ class _TranslateScreenState extends State<TranslateScreen> {
     );
   }
 }
-
 ```
 
 <img src="https://scontent.fkkc3-1.fna.fbcdn.net/v/t39.30808-6/321956306_528473869217638_4959635231571092650_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=730e14&_nc_ohc=YumrmcfO7jAAX9N9Ygd&tn=aWCijFs0IEeQXzfE&_nc_ht=scontent.fkkc3-1.fna&oh=00_AfCQk9ebz2qnPl2pshugchDnaEXMPe6rogXpdzc3UCfcmg&oe=63EF77E4" width="350" height="760">
 
-## Video Tutorials
+### Video Tutorials
  - <a href='https://www.youtube.com/watch?v=qUEUMxGW_0Q&ab_channel=idealBy'>Flutter Chat bot</a>
 
  - <a href='https://www.youtube.com/watch?v=z25HfnEi2zQ&t=1s&ab_channel=idealBy'>Flutter Generate Image</a>

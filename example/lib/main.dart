@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 import 'package:example/constants.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:material_buttonx/materialButtonX.dart';
 
 void main() => runApp(const MyApp());
@@ -36,110 +33,20 @@ class _TranslateScreenState extends State<TranslateScreen> {
   ///t => translate
   final tController = StreamController<CTResponse?>.broadcast();
 
-  Future<CTResponse?>? _translateFuture;
   void _translateEngToThai() async {
     final request = CompleteText(
         prompt: translateEngToThai(word: _txtWord.text.toString()),
         maxTokens: 200,
-        model: Model.TextDavinci3);
+        model: kTextDavinci3);
 
-    _translateFuture = openAI.onCompletion(request: request);
-  }
-
-  /// ### can stop generate prompt
-  void cancelAIGenerate() {
-    openAI.cancelAIGenerate();
-  }
-
-  void getFile() async {
-    final response = await openAI.file.get();
-    print(response.data);
-  }
-  
-  void uploadFile() async {
-    final request = UploadFile(file: EditFile('file-path', 'file-name'),purpose: 'fine-tune');
-    final response = await openAI.file.uploadFile(request);
-    print(response);
-  }
-
-  void delete() async {
-    final response = await openAI.file.delete("file-Id");
-    print(response);
-  }
-
-  void retrieve() async {
-    final response = await openAI.file.retrieve("file-Id");
-    print(response);
-  }
-
-  void retrieveContent() async {
-    final response = await openAI.file.retrieveContent("file-Id");
-    print(response);
-  }
-
-  void audioTranslate() async {
-    final mAudio = File('mp3-path');
-    final request =
-        AudioRequest(file: EditFile(mAudio.path, 'name'), prompt: '...');
-
-    final response = await openAI.audio.translate(request);
-  }
-
-  void audioTranscribe() async {
-    final mAudio = File('mp3-path');
-    final request =
-        AudioRequest(file: EditFile(mAudio.path, 'name'), prompt: '...');
-
-    final response = await openAI.audio.transcribes(request);
-  }
-
-  void editImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
-    final response = await openAI.editor.editImage(EditImageRequest(
-        image: EditFile("${image?.path}", '${image?.name}'),
-        mask: EditFile('file path', 'file name'),
-        size: ImageSize.size1024,
-        prompt: 'King Snake'));
-
-    print(response.data?.last?.url);
-
-    ///stop edit
-    /// openAI.editor.cancelEdit();
-  }
-
-  void variation() async {
-    final XFile? image =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-
-    final request =
-        Variation(image: EditFile('${image?.path}', '${image?.name}'));
-    final response = await openAI.editor.variation(request);
-
-    print(response.data?.last?.url);
-  }
-
-  void embedding() async {
-    final request = EmbedRequest(
-        model: EmbedModel.EmbedTextModel,
-        input: 'The food was delicious and the waiter');
-
-    final response = await openAI.embed.embedding(request);
-
-    print(response.data.last.embedding);
-  }
-
-  void editPrompt() async {
-    final response = await openAI.editor.prompt(EditRequest(
-        model: EditModel.TextEditModel,
-        input: 'What day of the wek is it?',
-        instruction: 'Fix the spelling mistakes'));
-
-    print(response.choices.last.text);
-
-    ///stop edit
-    /// openAI.editor.cancelEdit();
+    openAI
+        .onCompletionStream(request: request)
+        .asBroadcastStream()
+        .listen((res) {
+      tController.sink.add(res);
+    }).onError((err) {
+      print("$err");
+    });
   }
 
   ///ID of the model to use. Currently, only and are supported
@@ -148,12 +55,24 @@ class _TranslateScreenState extends State<TranslateScreen> {
   void _chatGpt3Example() async {
     final request = ChatCompleteText(messages: [
       Map.of({"role": "user", "content": 'Hello!'})
-    ], maxToken: 200, model: ChatModel.ChatGptTurbo0301Model);
+    ], maxToken: 200, model: kChatGptTurbo0301Model);
 
     final response = await openAI.onChatCompletion(request: request);
     for (var element in response!.choices) {
-      print("data -> ${element.message?.content}");
+      print("data -> ${element.message.content}");
     }
+  }
+
+  void _chatGpt3ExampleStream() async {
+    final request = ChatCompleteText(messages: [
+      Map.of({"role": "user", "content": 'Hello!'})
+    ], maxToken: 400, model: kChatGptTurboModel);
+
+    openAI.onChatCompletionStream(request: request).listen((it) {
+      debugPrint("${it?.choices.last.message}");
+    }).onError((err) {
+      print(err);
+    });
   }
 
   void modelDataList() async {
@@ -164,37 +83,22 @@ class _TranslateScreenState extends State<TranslateScreen> {
     final engines = await OpenAI.instance.build(token: "").listEngine();
   }
 
-  void completeWithSSE() {
-    final request = CompleteText(
-        prompt: "Hello world", maxTokens: 200, model: Model.TextDavinci3);
-    openAI.onCompletionSSE(request: request).listen((it) {
-      debugPrint(it.choices.last.text);
-    });
-  }
-
-  void chatCompleteWithSSE() {
-    final request = ChatCompleteText(messages: [
-      Map.of({"role": "user", "content": 'Hello!'})
-    ], maxToken: 200, model: ChatModel.ChatGptTurboModel);
-
-    openAI.onChatCompletionSSE(request: request).listen((it) {
-      debugPrint(it.choices.last.message?.content);
-    });
-  }
-
   @override
   void initState() {
     openAI = OpenAI.instance.build(
         token: token,
         baseOption: HttpSetup(
-            receiveTimeout: const Duration(seconds: 20),
-            connectTimeout: const Duration(seconds: 20)),
-        isLog: true);
+            receiveTimeout: const Duration(seconds: 6),
+            connectTimeout: const Duration(seconds: 6),
+            sendTimeout: const Duration(seconds: 6)),
+        isLogger: true);
     super.initState();
   }
 
   @override
   void dispose() {
+    ///close stream complete text
+    openAI.close();
     tController.close();
     super.dispose();
   }
@@ -252,14 +156,14 @@ class _TranslateScreenState extends State<TranslateScreen> {
                 icon: Icons.translate,
                 iconSize: 18.0,
                 radius: 46.0,
-                onClick: () => _translateEngToThai())),
+                onClick: () => _chatGpt3ExampleStream())),
       ],
     );
   }
 
   Widget _resultCard(Size size) {
-    return FutureBuilder<CTResponse?>(
-      future: _translateFuture,
+    return StreamBuilder<CTResponse?>(
+      stream: tController.stream,
       builder: (context, snapshot) {
         final text = snapshot.data?.choices.last.text ?? "Loading...";
         return Container(
